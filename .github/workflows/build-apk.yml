@@ -9,11 +9,11 @@ jobs:
  构建:
     runs-on: ubuntu-latest
     steps:
-    - 名称: 检出代码
-      使用: actions/checkout@v4
+检出代码
+使用了ctions/checkout@v4
       with:
         子模块: true
-        令牌: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - 名称: 设置 Python 环境
 使用: actions/setup-python@v5
@@ -45,5 +45,5 @@ Python 版本: '3.11'
       使用: actions/upload-artifact@v4
       with:
         名称: LKJ数据管理-APK
-路径: lkj_viewer/android_version/bin/*.apk
+        路径: lkj_viewer/android_version/bin/*.apk
         保留天数: 30
