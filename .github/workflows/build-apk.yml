@@ -1,45 +1,49 @@
-name: Build Android APK
+名称: 构建 Android APK
 
 on:
-  push:
-    branches: [ main, master ]
+  推送:
+分支: [ main, master ]
   workflow_dispatch:
 
 jobs:
-  build:
+ 构建:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - 名称: 检出代码
+      使用: actions/checkout@v4
       with:
-        python-version: '3.11'
+        子模块: true
+        令牌: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install system dependencies
-      run: |
+    - 名称: 设置 Python 环境
+使用: actions/setup-python@v5
+      with:
+Python 版本: '3.11'
+
+    - 名称: 安装系统依赖
+      运行: |
         sudo apt-get update -qq
         sudo apt-get install -y -qq git zip unzip openjdk-17-jdk \
           autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
           cmake libffi-dev libssl-dev
 
-    - name: Install Python dependencies
-      run: |
+    - 名称: 安装 Python 依赖项
+      运行: |
         pip install --upgrade buildozer Cython==0.29.36 python-for-android sh jinja2
 
-    - name: Copy shared module
-      run: |
+    - 名称: 复制共享模块
+      运行: |
         cp lkj_viewer/excel_handler.py lkj_viewer/android_version/
 
-    - name: Build APK
-      working-directory: lkj_viewer/android_version
-      run: |
+    - 名称: 构建APK
+工作目录: lkj_viewer/android_version
+      运行: |
         buildozer android debug
         ls -la bin/
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
+    - 名称: 上传APK
+      使用: actions/upload-artifact@v4
       with:
-        name: LKJ数据管理-APK
-        path: lkj_viewer/android_version/bin/*.apk
-        retention-days: 30
+        名称: LKJ数据管理-APK
+路径: lkj_viewer/android_version/bin/*.apk
+        保留天数: 30
