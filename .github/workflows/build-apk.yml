@@ -27,6 +27,13 @@ jobs:
       run: |
         pip install --upgrade buildozer Cython==0.29.36 python-for-android sh jinja2
 
+    - name: Accept Android SDK Licenses
+      run: |
+        export ANDROID_HOME=$HOME/Android/Sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+        yes | sdkmanager --licenses
+        echo "All Android SDK licenses accepted."
+
     - name: Copy shared module
       run: |
         cp lkj_viewer/excel_handler.py lkj_viewer/android_version/
