@@ -1,0 +1,45 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq git zip unzip openjdk-17-jdk \
+          autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
+          cmake libffi-dev libssl-dev
+
+    - name: Install Python dependencies
+      run: |
+        pip install --upgrade buildozer Cython==0.29.36 python-for-android sh jinja2
+
+    - name: Copy shared module
+      run: |
+        cp lkj_viewer/excel_handler.py lkj_viewer/android_version/
+
+    - name: Build APK
+      working-directory: lkj_viewer/android_version
+      run: |
+        buildozer android debug
+        ls -la bin/
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: LKJ数据管理-APK
+        path: lkj_viewer/android_version/bin/*.apk
+        retention-days: 30

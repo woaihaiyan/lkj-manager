@@ -1,0 +1,66 @@
+@echo off
+chcp 65001 >nul
+title LKJ数据管理 - APK打包工具
+
+echo ============================================================
+echo   LKJ数据管理 - Android APK 一键打包
+echo ============================================================
+echo.
+echo 此脚本在 WSL 中自动打包 APK
+echo.
+echo 前提: 已安装 WSL+Ubuntu (如未安装请先运行 install_wsl.bat)
+echo.
+pause
+
+echo.
+echo [1/3] 检查 WSL...
+wsl -l -v 2>nul
+if errorlevel 1 (
+    echo.
+    echo 错误: WSL 未安装!
+    echo 请先运行 install_wsl.bat 安装 WSL，然后重启电脑
+    pause
+    exit /b 1
+)
+
+echo.
+echo [2/3] 在 WSL 中安装依赖并打包 APK...
+echo 首次打包需下载 SDK/NDK (约1-2GB)，耗时20-40分钟
+echo.
+pause
+
+wsl bash -c "
+set -e
+echo '安装系统依赖...'
+sudo apt-get update -qq 2>/dev/null
+sudo apt-get install -y -qq git zip unzip openjdk-17-jdk python3-pip python3-setuptools python3-wheel autoconf libtool pkg-config zlib1g-dev libncurses5-dev cmake libffi-dev libssl-dev 2>/dev/null
+pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+pip3 install --user --upgrade buildozer Cython==0.29.36 python-for-android 2>/dev/null
+export PATH=\$PATH:~/.local/bin
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+cd /mnt/k/huawei/keshihua/demo/lkj_viewer/android_version
+cp ../excel_handler.py . 2>/dev/null || true
+cp ../doc_parser.py . 2>/dev/null || true
+
+echo '开始打包...'
+buildozer android debug
+
+APK=\$(find bin/ -name '*.apk' 2>/dev/null | head -1)
+if [ -n \"\$APK\" ]; then
+    cp \"\$APK\" /mnt/k/huawei/keshihua/demo/
+    echo \"打包成功! APK: \$(basename \$APK)\"
+else
+    echo '打包可能失败，请检查日志'
+fi
+"
+
+echo.
+echo [3/3] 完成!
+echo.
+echo APK 文件:
+dir /b "k:\huawei\keshihua\demo\*.apk" 2>nul
+echo.
+echo 将 APK 传到手机安装，Excel 文件放到 /sdcard/LKJ数据/ 目录
+echo.
+pause

@@ -1,0 +1,41 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq git zip unzip openjdk-17-jdk
+        pip install buildozer Cython==0.29.36
+
+    - name: Copy shared modules
+      run: |
+        cp excel_handler.py android_version/
+        # doc_parser.py 仅供 Flask 版 app.py 使用，Kivy 版 main.py 不导入，无需复制
+
+    - name: Build APK
+      working-directory: android_version
+      run: |
+        buildozer -v android debug
+        ls -la bin/
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: LKJ数据管理-APK
+        path: android_version/bin/*.apk
+        retention-days: 30
