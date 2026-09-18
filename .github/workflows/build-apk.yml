@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
- 构建:
+ build:
     runs-on: ubuntu-latest
     steps:
-检出代码
-使用了ctions/checkout@v4
+    - 名称: 检出代码
+      uses: actions/checkout@v4
       with:
         子模块: true
         token: ${{ secrets.GITHUB_TOKEN }}
