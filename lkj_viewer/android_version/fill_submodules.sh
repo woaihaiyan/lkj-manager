@@ -1,63 +1,47 @@
 #!/bin/bash
-J=/home/adminuser/lkj_build/.buildozer/android/platform/build-arm64-v8a/build/bootstrap_builds/sdl2/jni
-LOG=/home/adminuser/lkj_build/submodules.log
-echo "=== submodule fill started $(date) ===" > "$LOG"
+T=/home/adminuser/lkj_build/.buildozer/android/platform/build-arm64-v8a/build/bootstrap_builds/sdl2/jni/SDL2_image/external/libjxl/third_party
+LOG=/home/adminuser/lkj_build/submodules3.log
+echo "=== codeload fill started $(date) ===" > "$LOG"
 
-clone_one() {
-  local path="$1" url="$2" branch="$3"
-  if [ -d "$path" ] && [ -n "$(ls -A "$path" 2>/dev/null)" ]; then
-    echo "EXISTS $path" >> "$LOG"
+fill_zip() {
+  local path="$1" url="$2" name="$3"
+  if [ -d "$path" ] && [ -n "$(ls -A "$path" 2>/dev/null)" ] && [ ! -f "$path/.git" ]; then
+    echo "EXISTS $name" >> "$LOG"
     return 0
   fi
-  mkdir -p "$(dirname "$path")"
-  echo "CLONING $path <- ${url} ${branch:+@$branch}" >> "$LOG"
-  if [ -n "$branch" ]; then
-    git clone --depth 1 -b "$branch" "$url" "$path" >> "$LOG" 2>&1
-  else
-    git clone --depth 1 "$url" "$path" >> "$LOG" 2>&1
-  fi
-  if [ -d "$path" ] && [ -n "$(ls -A "$path" 2>/dev/null)" ]; then
-    echo "OK $path" >> "$LOG"
-  else
-    echo "BRANCH-FAIL, retry without branch: $path" >> "$LOG"
-    mv "$path" "$path.bad.$$" 2>/dev/null
-    git clone --depth 1 "$url" "$path" >> "$LOG" 2>&1
-    if [ -d "$path" ] && [ -n "$(ls -A "$path" 2>/dev/null)" ]; then
-      echo "OK2 $path" >> "$LOG"
+  mkdir -p "$path"
+  local tmp="/tmp/cd_$name"
+  mkdir -p "$tmp"
+  echo "DOWNLOAD $name" >> "$LOG"
+  timeout 120 curl -sL -o "$tmp/pkg.zip" "$url" >> "$LOG" 2>&1
+  if [ -s "$tmp/pkg.zip" ]; then
+    (cd "$tmp" && unzip -q -o pkg.zip) >> "$LOG" 2>&1
+    local inner=$(ls -d "$tmp"/*/ 2>/dev/null | head -1)
+    if [ -n "$inner" ]; then
+      mv "$path" "$path.old.$$" 2>/dev/null
+      mkdir -p "$path"
+      shopt -s dotglob
+      mv "$inner"* "$path/" 2>/dev/null
+      shopt -u dotglob
+      if [ -n "$(ls -A "$path" 2>/dev/null)" ]; then
+        echo "OK $name ($(ls -A "$path" | wc -l) items)" >> "$LOG"
+      else
+        echo "FAILED(empty) $name" >> "$LOG"
+      fi
     else
-      echo "FAILED $path" >> "$LOG"
+      echo "FAILED(unzip) $name" >> "$LOG"
     fi
+  else
+    echo "FAILED(download) $name" >> "$LOG"
   fi
 }
 
-I=$J/SDL2_image/external
-T=$J/SDL2_image/external/libjxl/third_party
-M=$J/SDL2_mixer/external
-F=$J/SDL2_ttf/external
-
-# SDL2_image
-clone_one "$I/libavif"   https://github.com/libsdl-org/libavif.git  v1.0.3-SDL
-clone_one "$I/dav1d"     https://github.com/libsdl-org/dav1d.git    1.2.1-SDL
-# libjxl third_party
-clone_one "$T/lodepng"   https://github.com/lvandeve/lodepng        ""
-clone_one "$T/lcms"      https://github.com/mm2/Little-CMS         ""
-clone_one "$T/googletest" https://github.com/google/googletest     ""
-clone_one "$T/sjpeg"     https://github.com/webmproject/sjpeg.git  ""
-clone_one "$T/skcms"     https://github.com/google/skcms           ""
-clone_one "$T/brotli"    https://github.com/libsdl-org/brotli.git  v1.0.9-SDL
-clone_one "$T/highway"   https://github.com/libsdl-org/highway.git 0.15.0-SDL
-# SDL2_mixer
-clone_one "$M/flac"      https://github.com/libsdl-org/flac.git     1.3.4-SDL
-clone_one "$M/ogg"       https://github.com/libsdl-org/ogg.git      v1.3.5-SDL
-clone_one "$M/vorbis"    https://github.com/libsdl-org/vorbis.git   v1.3.7-SDL
-clone_one "$M/opus"      https://github.com/libsdl-org/opus.git     v1.3.1-SDL
-clone_one "$M/opusfile"  https://github.com/libsdl-org/opusfile.git v0.12-SDL
-clone_one "$M/tremor"    https://github.com/libsdl-org/tremor.git   v1.2.1-SDL
-clone_one "$M/libmodplug" https://github.com/libsdl-org/libmodplug.git v0.8.9.0-SDL
-clone_one "$M/mpg123"    https://github.com/libsdl-org/mpg123.git   v1.29.3-SDL
-# SDL2_ttf
-clone_one "$F/freetype"  https://github.com/libsdl-org/freetype.git  VER-2-13-2-SDL
-clone_one "$F/harfbuzz"  https://github.com/libsdl-org/harfbuzz.git  8.1.1-SDL
+fill_zip "$T/lodepng"    "https://codeload.github.com/lvandeve/lodepng/zip/refs/heads/master"    lodepng
+fill_zip "$T/lcms"       "https://codeload.github.com/mm2/Little-CMS/zip/refs/heads/master"     lcms
+fill_zip "$T/googletest" "https://codeload.github.com/google/googletest/zip/refs/heads/main"    googletest
+fill_zip "$T/sjpeg"      "https://codeload.github.com/webmproject/sjpeg/zip/refs/heads/master"  sjpeg
+fill_zip "$T/brotli"     "https://codeload.github.com/libsdl-org/brotli/zip/refs/heads/v1.0.9-SDL" brotli
+fill_zip "$T/highway"    "https://codeload.github.com/libsdl-org/highway/zip/refs/heads/0.15.0-SDL" highway
 
 echo "=== done $(date) ===" >> "$LOG"
 echo ALLDONE
