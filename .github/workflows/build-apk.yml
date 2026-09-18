@@ -1,45 +1,55 @@
-name: Build Android APK
-
+name: 构建 Android APK
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Set up Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq git zip unzip openjdk-17-jdk \
-          autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
-          cmake libffi-dev libssl-dev
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
 
-    - name: Install Python dependencies
-      run: |
-        pip install --upgrade buildozer Cython==0.29.36 python-for-android sh jinja2
+      - name: Install Android SDK cmdline-tools
+        run: |
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          cd $HOME/android-sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/cmdline-tools-linux-10.0.zip
+          unzip cmdline-tools-linux-10.0.zip
+          mv cmdline-tools latest
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
 
-    - name: Copy shared module
-      run: |
-        cp lkj_viewer/excel_handler.py lkj_viewer/android_version/
+      - name: Accept SDK license & install build-tools/platform
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-33" "build-tools;37.0.0"
 
-    - name: Build APK
-      working-directory: lkj_viewer/android_version
-      run: |
-        buildozer android debug
-        ls -la bin/
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade buildozer Cython==0.29.36 python-for-android sh jinja2
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: LKJ数据管理-APK
-        path: lkj_viewer/android_version/bin/*.apk
-        retention-days: 30
+      - name: Build APK
+        run: |
+          cd lkj_viewer/excel_handler
+          buildozer android debug
+          ls -la bin/
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LKJ数据管理-APK
+          path: lkj_viewer/excel_handler/bin/*.apk
+          retention-days: 90
