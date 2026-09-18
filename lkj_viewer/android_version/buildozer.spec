@@ -7,7 +7,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,txt,json,xlsx
 source.exclude_dirs = tests,bin,build,dist,__pycache__,templates,static,.buildozer,python-for-android,.github
 source.exclude_patterns = app.py,build_android.py,doc_parser.py,build_apk_wsl.sh
-
+android.accept_all_licenses = True
 version = 1.0.0
 
 requirements = python3,kivy,openpyxl
