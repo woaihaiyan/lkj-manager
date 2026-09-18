@@ -1,49 +1,49 @@
-名称: 构建 Android APK
+name: 构建 Android APK
 
 on:
-  推送:
-分支: [ main, master ]
+  push:
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
- build:
+  build:
     runs-on: ubuntu-latest
     steps:
-    - 名称: 检出代码
-      uses: actions/checkout@v4
-      with:
-        子模块: true
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - 名称: 设置 Python 环境
-使用: actions/setup-python@v5
-      with:
-Python 版本: '3.11'
+      - name: 设置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - 名称: 安装系统依赖
-      运行: |
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq git zip unzip openjdk-17-jdk \
-          autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
-          cmake libffi-dev libssl-dev
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq git zip unzip openjdk-17-jdk \
+            autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
+            cmake libffi-dev libssl-dev
 
-    - 名称: 安装 Python 依赖项
-      运行: |
-        pip install --upgrade buildozer Cython==0.29.36 python-for-android sh jinja2
+      - name: 安装 Python 依赖项
+        run: |
+          pip install --upgrade buildozer Cython==0.29.36 python-for-android sh jinja2
 
-    - 名称: 复制共享模块
-      运行: |
-        cp lkj_viewer/excel_handler.py lkj_viewer/android_version/
+      - name: 复制共享模块
+        run: |
+          cp lkj_viewer/excel_handler.py lkj_viewer/android_version/
 
-    - 名称: 构建APK
-工作目录: lkj_viewer/android_version
-      运行: |
-        buildozer android debug
-        ls -la bin/
+      - name: 构建APK
+        working-directory: lkj_viewer/android_version
+        run: |
+          buildozer android debug
+          ls -la bin/
 
-    - 名称: 上传APK
-      使用: actions/upload-artifact@v4
-      with:
-        名称: LKJ数据管理-APK
-        路径: lkj_viewer/android_version/bin/*.apk
-        保留天数: 30
+      - name: 上传APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LKJ数据管理-APK
+          path: lkj_viewer/android_version/bin/*.apk
+          retention-days: 30
